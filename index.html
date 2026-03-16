@@ -1,0 +1,530 @@
+import React, { useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
+import { CalendarDays, Bike, Dumbbell, House, Clock3, HeartPulse, CheckCircle2 } from "lucide-react";
+
+const todaySession = {
+  id: "day1-gym-diagnostic",
+  title: "Day 1 Gym Diagnostic Session",
+  type: "Gym + Run Test",
+  goal: "Restart training safely, check knee/back response, and note left-right imbalance.",
+  duration: "40–50 min",
+  location: "Gym",
+  steps: [
+    {
+      section: "Warmup Bike",
+      duration: "10 min",
+      items: [
+        "5 min very easy spin",
+        "3 min slightly faster but still easy",
+        "2 min easy again",
+      ],
+    },
+    {
+      section: "Mobility Activation",
+      duration: "8 min",
+      items: [
+        "Glute bridges — 2 x 12",
+        "Banded lateral walks — 2 x 10 steps each direction",
+        "World's greatest stretch — 5 each side",
+        "Dead bug — 2 x 10 slow reps",
+      ],
+    },
+    {
+      section: "Run-Walk Test",
+      duration: "20 min",
+      items: [
+        "5 min walk",
+        "Then 4 rounds of: 3 min easy run + 2 min walk",
+        "Keep pace conversational and relaxed",
+      ],
+    },
+    {
+      section: "Light Strength",
+      duration: "10–12 min",
+      items: [
+        "Bulgarian split squat — 3 x 8 each leg",
+        "Single-leg Romanian deadlift — 3 x 8 each leg",
+        "Step-ups — 2 x 10 each leg",
+        "Move slow and note whether left leg feels weaker or shakier",
+      ],
+    },
+    {
+      section: "Cooldown",
+      duration: "5–8 min",
+      items: [
+        "Hamstring stretch — 1 min each side",
+        "Couch stretch — 1 min each side",
+        "Cat-cow — 10 reps",
+      ],
+    },
+  ],
+  watchFor: [
+    "Did left leg fatigue faster?",
+    "Any knee discomfort during running?",
+    "Any hamstring tightness while running?",
+    "Any lower back tightness?",
+  ],
+};
+
+const homeMobility = {
+  title: "Daily 10-Min Home Mobility Reset",
+  items: [
+    "Cat-cow — 10 reps",
+    "Glute bridge — 15 reps",
+    "Dead bug — 10 reps each side",
+    "Hamstring stretch — 45 sec each side",
+    "Couch stretch — 45 sec each side",
+  ],
+};
+
+const workoutLibrary = {
+  home: {
+    10: {
+      title: "10-Min Home Reset",
+      type: "Mobility + Core",
+      steps: [
+        "Cat-cow — 10 reps",
+        "Glute bridge — 15 reps",
+        "Dead bug — 10 reps each side",
+        "Hamstring stretch — 45 sec each side",
+        "Couch stretch — 45 sec each side",
+      ],
+    },
+    20: {
+      title: "20-Min Home Strength Reset",
+      type: "Strength + Mobility",
+      steps: [
+        "Bodyweight squat — 3 x 10",
+        "Reverse lunge — 3 x 8 each leg",
+        "Glute bridge — 3 x 12",
+        "Dead bug — 3 x 8 each side",
+        "Hamstring stretch — 1 min each side",
+      ],
+    },
+    30: {
+      title: "30-Min Home Leg + Core",
+      type: "Strength",
+      steps: [
+        "Split squat — 3 x 8 each leg",
+        "Single-leg glute bridge — 3 x 8 each leg",
+        "Banded lateral walk — 3 x 10 each direction",
+        "Plank — 3 x 30 sec",
+        "Dead bug — 3 x 8 each side",
+        "Couch stretch + hamstring stretch",
+      ],
+    },
+  },
+  gym: {
+    20: {
+      title: "20-Min Gym Easy Return",
+      type: "Cardio + Mobility",
+      steps: [
+        "Bike or treadmill — 10 min easy",
+        "Glute bridge — 2 x 12",
+        "Dead bug — 2 x 10",
+        "Hamstring stretch — 1 min each side",
+      ],
+    },
+    30: {
+      title: "30-Min Gym Strength Intro",
+      type: "Strength",
+      steps: [
+        "Bike warmup — 5 min",
+        "Goblet squat — 3 x 8",
+        "Split squat — 3 x 8 each leg",
+        "Romanian deadlift — 3 x 8",
+        "Dead bug — 2 x 10 each side",
+      ],
+    },
+    45: {
+      title: "45-Min Gym Run + Strength",
+      type: "Run + Strength",
+      steps: [
+        "Warmup bike — 8 min",
+        "Treadmill easy run/walk — 20 min",
+        "Split squat — 3 x 8 each leg",
+        "Single-leg RDL — 3 x 8 each leg",
+        "Hamstring + hip flexor stretch",
+      ],
+    },
+    60: {
+      title: "60-Min Gym Endurance Builder",
+      type: "Cardio + Strength",
+      steps: [
+        "Bike warmup — 10 min",
+        "Easy run or bike — 25 min",
+        "Leg press or goblet squat — 3 x 8",
+        "Split squat — 3 x 8 each leg",
+        "Core finisher — plank + dead bug",
+        "Cooldown mobility",
+      ],
+    },
+  },
+  outdoor: {
+    20: {
+      title: "20-Min Outdoor Run/Walk",
+      type: "Run",
+      steps: [
+        "5 min walk",
+        "10 min easy jog",
+        "5 min walk cooldown",
+      ],
+    },
+    30: {
+      title: "30-Min Easy Run",
+      type: "Run",
+      steps: [
+        "5 min brisk walk",
+        "20 min easy run",
+        "5 min walk cooldown",
+      ],
+    },
+    45: {
+      title: "45-Min Easy Ride or Run",
+      type: "Endurance",
+      steps: [
+        "Keep effort easy and conversational",
+        "Focus on smooth cadence or relaxed stride",
+        "Finish with hamstring + hip flexor stretch",
+      ],
+    },
+    60: {
+      title: "60-Min Endurance Session",
+      type: "Endurance",
+      steps: [
+        "Ride or run at easy effort",
+        "No hard intervals",
+        "Afterward: 5–10 min mobility",
+      ],
+    },
+  },
+};
+
+function WorkoutCard({ title, subtitle, steps, footer, highlight = false }) {
+  return (
+    <Card className={`rounded-2xl shadow-sm ${highlight ? "border-2" : ""}`}>
+      <CardHeader>
+        <CardTitle className="text-xl">{title}</CardTitle>
+        {subtitle ? <CardDescription>{subtitle}</CardDescription> : null}
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="space-y-2">
+          {steps.map((step, i) => (
+            <div key={i} className="flex gap-3 rounded-xl border p-3">
+              <Badge variant="secondary" className="h-fit">{i + 1}</Badge>
+              <p className="text-sm leading-6">{step}</p>
+            </div>
+          ))}
+        </div>
+        {footer ? <div className="text-sm text-muted-foreground">{footer}</div> : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+export default function EnduranceCoachWorkoutApp() {
+  const [location, setLocation] = useState("gym");
+  const [minutes, setMinutes] = useState(45);
+  const [completedSteps, setCompletedSteps] = useState({});
+  const [feedback, setFeedback] = useState({
+    workoutName: todaySession.title,
+    totalTime: "",
+    howItFelt: "",
+    kneePain: false,
+    backTightness: false,
+    weakerLeg: "",
+    notes: "",
+  });
+  const [savedLogs, setSavedLogs] = useState([]);
+
+  const generatedWorkout = useMemo(() => {
+    const locLib = workoutLibrary[location];
+    const key = [10, 20, 30, 45, 60].find((v) => v === minutes) || 30;
+    return locLib[key] || locLib[30] || locLib[20];
+  }, [location, minutes]);
+
+  const toggleStep = (sectionIndex, itemIndex) => {
+    const key = `${sectionIndex}-${itemIndex}`;
+    setCompletedSteps((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const todayProgress = (() => {
+    const total = todaySession.steps.reduce((sum, s) => sum + s.items.length, 0);
+    const done = Object.values(completedSteps).filter(Boolean).length;
+    return total ? Math.round((done / total) * 100) : 0;
+  })();
+
+  const saveLog = () => {
+    const entry = {
+      ...feedback,
+      id: Date.now(),
+      date: new Date().toLocaleString(),
+    };
+    setSavedLogs((prev) => [entry, ...prev]);
+    setFeedback((prev) => ({
+      ...prev,
+      totalTime: "",
+      howItFelt: "",
+      kneePain: false,
+      backTightness: false,
+      weakerLeg: "",
+      notes: "",
+    }));
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Card className="rounded-2xl shadow-sm md:col-span-2">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-2xl">
+                <HeartPulse className="h-6 w-6" /> Endurance Coach Dashboard
+              </CardTitle>
+              <CardDescription>
+                Flexible training for rebuilding running, cycling, leg strength, mobility, and left-right balance.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-wrap gap-2 text-sm">
+              <Badge variant="secondary">Restart phase</Badge>
+              <Badge variant="secondary">ACL-aware</Badge>
+              <Badge variant="secondary">Run + ride support</Badge>
+              <Badge variant="secondary">Daily home mobility</Badge>
+            </CardContent>
+          </Card>
+          <Card className="rounded-2xl shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CalendarDays className="h-5 w-5" /> Today’s Focus
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm leading-6">
+              <p>Start small. Stay consistent. Track how your body responds.</p>
+              <p className="text-muted-foreground">Today: gym diagnostic session + post-workout feedback.</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        <Tabs defaultValue="today" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4 rounded-2xl">
+            <TabsTrigger value="today">Today</TabsTrigger>
+            <TabsTrigger value="planner">Planner</TabsTrigger>
+            <TabsTrigger value="mobility">Mobility</TabsTrigger>
+            <TabsTrigger value="log">Feedback Log</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="today" className="space-y-4">
+            <div className="grid gap-4 lg:grid-cols-3">
+              <Card className="rounded-2xl shadow-sm lg:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Dumbbell className="h-5 w-5" /> {todaySession.title}
+                  </CardTitle>
+                  <CardDescription>
+                    {todaySession.type} • {todaySession.duration} • {todaySession.goal}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Session progress</span>
+                      <span>{todayProgress}%</span>
+                    </div>
+                    <Progress value={todayProgress} />
+                  </div>
+
+                  {todaySession.steps.map((section, sIdx) => (
+                    <div key={section.section} className="rounded-2xl border p-4">
+                      <div className="mb-3 flex items-center justify-between gap-3">
+                        <div>
+                          <h3 className="font-semibold">{section.section}</h3>
+                          <p className="text-sm text-muted-foreground">{section.duration}</p>
+                        </div>
+                        <Badge variant="outline">Block {sIdx + 1}</Badge>
+                      </div>
+                      <div className="space-y-3">
+                        {section.items.map((item, iIdx) => {
+                          const key = `${sIdx}-${iIdx}`;
+                          return (
+                            <label key={key} className="flex items-start gap-3 rounded-xl border p-3 cursor-pointer">
+                              <Checkbox checked={!!completedSteps[key]} onCheckedChange={() => toggleStep(sIdx, iIdx)} />
+                              <span className="text-sm leading-6">{item}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CheckCircle2 className="h-5 w-5" /> What to watch for
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {todaySession.watchFor.map((item, idx) => (
+                    <div key={idx} className="rounded-xl border p-3 text-sm leading-6">
+                      {item}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader>
+                <CardTitle>Post-workout feedback</CardTitle>
+                <CardDescription>
+                  Fill this out after training so we can adjust your next sessions based on what your body tells us.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-3">
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">Workout name</label>
+                    <Input value={feedback.workoutName} onChange={(e) => setFeedback({ ...feedback, workoutName: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">Total workout time</label>
+                    <Input placeholder="e.g. 47 min" value={feedback.totalTime} onChange={(e) => setFeedback({ ...feedback, totalTime: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">How it felt</label>
+                    <Input placeholder="easy / moderate / hard" value={feedback.howItFelt} onChange={(e) => setFeedback({ ...feedback, howItFelt: e.target.value })} />
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">Which leg felt weaker?</label>
+                    <Input placeholder="left / right / equal" value={feedback.weakerLeg} onChange={(e) => setFeedback({ ...feedback, weakerLeg: e.target.value })} />
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 rounded-xl border p-3">
+                    <Checkbox checked={feedback.kneePain} onCheckedChange={(checked) => setFeedback({ ...feedback, kneePain: !!checked })} />
+                    <span className="text-sm">I noticed knee pain/discomfort</span>
+                  </div>
+                  <div className="flex items-center gap-3 rounded-xl border p-3">
+                    <Checkbox checked={feedback.backTightness} onCheckedChange={(checked) => setFeedback({ ...feedback, backTightness: !!checked })} />
+                    <span className="text-sm">I noticed lower back tightness</span>
+                  </div>
+                  <div>
+                    <label className="mb-2 block text-sm font-medium">Notes</label>
+                    <Textarea
+                      placeholder="What you actually did, how the run felt, hamstrings, knee, back, energy, anything important..."
+                      className="min-h-[140px]"
+                      value={feedback.notes}
+                      onChange={(e) => setFeedback({ ...feedback, notes: e.target.value })}
+                    />
+                  </div>
+                  <Button className="w-full rounded-2xl" onClick={saveLog}>Save feedback log</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="planner" className="space-y-4">
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader>
+                <CardTitle>Choose today’s situation</CardTitle>
+                <CardDescription>
+                  Use this when plans change. Pick where you are and how much time you have.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <p className="mb-3 text-sm font-medium">Where are you?</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      <Button variant={location === "home" ? "default" : "outline"} className="rounded-2xl" onClick={() => setLocation("home")}>
+                        <House className="mr-2 h-4 w-4" /> Home
+                      </Button>
+                      <Button variant={location === "gym" ? "default" : "outline"} className="rounded-2xl" onClick={() => setLocation("gym")}>
+                        <Dumbbell className="mr-2 h-4 w-4" /> Gym
+                      </Button>
+                      <Button variant={location === "outdoor" ? "default" : "outline"} className="rounded-2xl" onClick={() => setLocation("outdoor")}>
+                        <Bike className="mr-2 h-4 w-4" /> Outdoor
+                      </Button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-3 text-sm font-medium">How much time do you have?</p>
+                    <div className="grid grid-cols-5 gap-2">
+                      {[10, 20, 30, 45, 60].map((m) => (
+                        <Button key={m} variant={minutes === m ? "default" : "outline"} className="rounded-2xl" onClick={() => setMinutes(m)}>
+                          <Clock3 className="mr-1 h-4 w-4" /> {m}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <WorkoutCard
+              title={generatedWorkout.title}
+              subtitle={`${generatedWorkout.type} • ${location} • ${minutes} min`}
+              steps={generatedWorkout.steps}
+              footer="Start easy. If knee or back does not feel right, reduce the load and switch to mobility/core."
+              highlight
+            />
+          </TabsContent>
+
+          <TabsContent value="mobility" className="space-y-4">
+            <WorkoutCard
+              title={homeMobility.title}
+              subtitle="Your everyday maintenance habit"
+              steps={homeMobility.items}
+              footer="This is the routine to keep doing even during dissertation chaos, job hunting, or moving weeks."
+            />
+          </TabsContent>
+
+          <TabsContent value="log" className="space-y-4">
+            <Card className="rounded-2xl shadow-sm">
+              <CardHeader>
+                <CardTitle>Saved feedback entries</CardTitle>
+                <CardDescription>
+                  Your recent self-checks live here. You can copy these into chat so I can coach your next workout.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {savedLogs.length === 0 ? (
+                  <div className="rounded-xl border border-dashed p-6 text-sm text-muted-foreground">
+                    No logs saved yet. Complete today’s session and save your feedback.
+                  </div>
+                ) : (
+                  savedLogs.map((log) => (
+                    <div key={log.id} className="rounded-2xl border p-4">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <h3 className="font-semibold">{log.workoutName}</h3>
+                        <Badge variant="outline">{log.date}</Badge>
+                      </div>
+                      <div className="mt-3 grid gap-2 text-sm md:grid-cols-2">
+                        <div><span className="font-medium">Time:</span> {log.totalTime || "—"}</div>
+                        <div><span className="font-medium">Felt:</span> {log.howItFelt || "—"}</div>
+                        <div><span className="font-medium">Weaker leg:</span> {log.weakerLeg || "—"}</div>
+                        <div><span className="font-medium">Knee pain:</span> {log.kneePain ? "Yes" : "No"}</div>
+                        <div><span className="font-medium">Back tightness:</span> {log.backTightness ? "Yes" : "No"}</div>
+                      </div>
+                      <div className="mt-3 rounded-xl bg-muted p-3 text-sm leading-6">
+                        {log.notes || "No extra notes."}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
